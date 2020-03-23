@@ -15,6 +15,7 @@ const server = createServer(socket => {
     
     let buffer = '';
     let receiveData = false;
+
     const ending = '\r\n';
 
     socket.on('data', data => {
@@ -40,7 +41,7 @@ const server = createServer(socket => {
                         socket.write('250 Ok\r\n');
                         break;
                     case SMTPCommand.DATA:
-                        socket.write('354 End data with \r\n.\r\n\r\n');
+                        socket.write('354 End data with <CR><LF>.<CR><LF>\r\n');
                         receiveData = true;
                         break;
                     case SMTPCommand.QUIT:
@@ -54,10 +55,9 @@ const server = createServer(socket => {
             }
         } else {
             if (receiveData && (buffer + string).includes('\r\n.\r\n')) {
-                console.log(buffer);
                 buffer = '';
                 receiveData = false;
-                socket.write('250 Ok: queued as 12345\r\n');
+                socket.write('250 Ok\r\n');
             } else {
                 buffer += string;
             }
