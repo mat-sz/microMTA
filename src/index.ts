@@ -15,8 +15,14 @@ const server = createServer(socket => {
     
     let buffer = '';
     let receiveData = false;
+    let recipients: string[] = [];
+    let from: string = undefined;
 
     const ending = '\r\n';
+
+    socket.on('error', err => {
+        // For now, ignore.
+    });
 
     socket.on('data', data => {
         const string = data.toString();
@@ -26,8 +32,7 @@ const server = createServer(socket => {
             commands[0] = buffer + commands[0];
             buffer = '';
 
-            for (let i = 0; i < commands.length - (string.endsWith(ending) ? 0 : 1); i++) {
-                console.log(commands[i]);
+            for (let i = 0; i < commands.length - 1; i++) {
                 const [ command, args ] = commands[i].split(' ', 2);
                 
                 switch (command) {
@@ -35,18 +40,34 @@ const server = createServer(socket => {
                         socket.write('250 localhost, greeting accepted.\r\n');
                         break;
                     case SMTPCommand.MAIL:
-                        socket.write('250 Ok\r\n');
+                        if (args.startsWith('FROM:<') && args.endsWith('>')) {
+                            from = args.substring(6, args.length - 1);
+                            socket.write('250 Ok\r\n');   
+                        } else {
+                            socket.write('501 Argument syntax error\r\n');
+                        }
                         break;
                     case SMTPCommand.RCPT:
-                        socket.write('250 Ok\r\n');
+                        if (args.startsWith('TO:<') && args.endsWith('>')) {
+                            recipients.push(args.substring(4, args.length - 1));
+                            socket.write('250 Ok\r\n');   
+                        } else {
+                            socket.write('501 Argument syntax error\r\n');
+                        }
                         break;
                     case SMTPCommand.DATA:
-                        socket.write('354 End data with <CR><LF>.<CR><LF>\r\n');
-                        receiveData = true;
+                        if (recipients.length > 0 && from) {
+                            socket.write('354 End data with <CR><LF>.<CR><LF>\r\n');
+                            receiveData = true;
+                        } else {
+                            socket.write('503 Bad sequence\r\n');
+                        }
                         break;
                     case SMTPCommand.QUIT:
                         socket.write('221 Bye\r\n');
                         break;
+                    default:
+                        socket.write('502 Not implemented\r\n');
                 }
             }
 
