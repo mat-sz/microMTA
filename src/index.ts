@@ -2,22 +2,72 @@ import { createServer, Server, Socket } from 'net';
 
 import { SMTPCommand } from './SMTPCommand';
 
+interface microMTAMessage {
+    recipients: string[],
+    sender: string,
+    message: string,
+};
+
+type microMTAMessageEventListener = (this: microMTA, message: microMTAMessage) => void;
+type microMTAErrorEventListener = (this: microMTA, error: Error) => void;
+
+interface microMTAEvents {
+    message: Set<microMTAMessageEventListener>,
+    error: Set<microMTAErrorEventListener>,
+};
+
 export class microMTA {
     private server: Server;
+
+    private events: microMTAEvents = {
+        message: new Set(),
+        error: new Set(),
+    };
 
     constructor() {
         this.server = createServer(socket => this.connection(socket));
     }
 
-    public start() {
+    start() {
         this.server.listen(25);
     }
 
-    public stop() {
+    stop() {
         this.server.close();
     }
 
+    on(eventType: 'message', listener: microMTAMessageEventListener): void;
+
+    on(eventType: 'error', listener: microMTAErrorEventListener): void;
+
+    on(eventType: keyof microMTAEvents, listener: Function) {
+        this.events[eventType].add(listener as any);
+    }
+
+    off(eventType: 'message', listener: microMTAMessageEventListener): void;
+
+    off(eventType: 'error', listener: microMTAErrorEventListener): void;
+
+    off(eventType: keyof microMTAEvents, listener: Function) {
+        this.events[eventType].delete(listener as any);
+    }
+
+    private emit(eventType: keyof microMTAEvents, ...args: any[]) {
+        for (let listener of this.events[eventType]) {
+            (listener as Function).apply(this, args);
+        }
+    }
+
     private message(recipients: string[], sender: string, message: string) {
+        this.emit('message', {
+            recipients,
+            sender,
+            message,
+        } as microMTAMessage);
+    }
+
+    private error(error: Error) {
+        this.emit('error', error);
     }
 
     private connection(socket: Socket) {
@@ -35,9 +85,7 @@ export class microMTA {
 
         const ending = '\r\n';
 
-        socket.on('error', err => {
-            // For now, ignore.
-        });
+        socket.on('error', err => this.error(err));
 
         socket.on('data', data => {
             const string = data.toString();
