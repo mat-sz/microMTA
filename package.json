@@ -1,11 +1,24 @@
 {
   "name": "micromta",
   "version": "0.0.1",
-  "main": "src/index.ts",
+  "description": "Lightweight Mail Transfer Agent for node.js",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "scripts": {
+    "prepare": "npm run build",
     "start": "ts-node-dev --respawn --transpileOnly src/index.ts",
     "build": "tsc"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mat-sz/microMTA.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mat-sz/microMTA/issues"
+  },
+  "homepage": "https://github.com/mat-sz/microMTA",
+  "author": "Mat Sz <contact@matsz.dev>",
+  "license": "BSD-3-Clause-Clear",
   "dependencies": {
   },
   "devDependencies": {
