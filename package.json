@@ -1,0 +1,16 @@
+{
+  "name": "micromta",
+  "version": "0.0.1",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "ts-node-dev --respawn --transpileOnly src/index.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+    "typescript": "^3.7.4",
+    "@types/node": "^13.1.4",
+    "ts-node-dev": "^1.0.0-pre.44"
+  }
+}
