@@ -3,6 +3,7 @@ import { createServer, Server, Socket } from 'net';
 import { SMTPCommand } from './commands';
 import { microMTAEvents, microMTAErrorEventListener, microMTAMessageEventListener } from './events';
 import { microMTAMessage } from './message';
+import { microMTAOptions } from './options';
 
 export class microMTA {
     private server: Server;
@@ -12,7 +13,16 @@ export class microMTA {
         error: new Set(),
     };
 
-    constructor() {
+    private options: microMTAOptions = {
+        hostname: 'localhost',
+    };
+
+    constructor(options?: microMTAOptions) {
+        this.options = {
+            ...this.options,
+            ...options,
+        };
+
         this.server = createServer(socket => this.connection(socket));
     }
 
@@ -64,12 +74,12 @@ export class microMTA {
             socket.write(code + ' ' + message + '\r\n');
         };
 
-        reply(220, 'localhost ESMTP microMTA');
+        reply(220, this.options.hostname + ' ESMTP microMTA');
         
         let buffer = '';
         let receiveData = false;
         let recipients: string[] = [];
-        let sender: string = undefined;
+        let sender: string;
 
         const ending = '\r\n';
 
@@ -88,7 +98,7 @@ export class microMTA {
                     
                     switch (command) {
                         case SMTPCommand.HELO:
-                            reply(250, 'localhost, greeting accepted.');
+                            reply(250, this.options.hostname + ', greeting accepted.');
                             break;
                         case SMTPCommand.MAIL:
                             if (args.startsWith('FROM:<') && args.endsWith('>')) {
