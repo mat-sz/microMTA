@@ -1,20 +1,8 @@
 import { createServer, Server, Socket } from 'net';
 
-import { SMTPCommand } from './SMTPCommand';
-
-interface microMTAMessage {
-    recipients: string[],
-    sender: string,
-    message: string,
-};
-
-type microMTAMessageEventListener = (this: microMTA, message: microMTAMessage) => void;
-type microMTAErrorEventListener = (this: microMTA, error: Error) => void;
-
-interface microMTAEvents {
-    message: Set<microMTAMessageEventListener>,
-    error: Set<microMTAErrorEventListener>,
-};
+import { SMTPCommand } from './commands';
+import { microMTAEvents, microMTAErrorEventListener, microMTAMessageEventListener } from './events';
+import { microMTAMessage } from './message';
 
 export class microMTA {
     private server: Server;
