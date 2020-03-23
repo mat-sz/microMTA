@@ -1,89 +1,100 @@
-import { createServer } from 'net';
+import { createServer, Server, Socket } from 'net';
 
-enum SMTPCommand {
-    HELO = 'HELO',
-    MAIL = 'MAIL',
-    RCPT = 'RCPT',
-    DATA = 'DATA',
-    QUIT = 'QUIT',
-};
+import { SMTPCommand } from './SMTPCommand';
 
-const server = createServer(socket => {
-    socket.setEncoding('utf8');
+export class microMTA {
+    private server: Server;
 
-    socket.write('220 localhost ESMTP microMTA\r\n');
-    
-    let buffer = '';
-    let receiveData = false;
-    let recipients: string[] = [];
-    let from: string = undefined;
+    constructor() {
+        this.server = createServer(socket => this.connection(socket));
+    }
 
-    const ending = '\r\n';
+    public start() {
+        this.server.listen(25);
+    }
 
-    socket.on('error', err => {
-        // For now, ignore.
-    });
+    public stop() {
+        this.server.close();
+    }
 
-    socket.on('data', data => {
-        const string = data.toString();
+    private message(recipients: string[], sender: string, message: string) {
+    }
+
+    private connection(socket: Socket) {
+        socket.setEncoding('utf8');
+        socket.write('220 localhost ESMTP microMTA\r\n');
         
-        if (!receiveData && string.includes(ending)) {
-            const commands = string.split(ending);
-            commands[0] = buffer + commands[0];
-            buffer = '';
+        let buffer = '';
+        let receiveData = false;
+        let recipients: string[] = [];
+        let sender: string = undefined;
 
-            for (let i = 0; i < commands.length - 1; i++) {
-                const [ command, args ] = commands[i].split(' ', 2);
-                
-                switch (command) {
-                    case SMTPCommand.HELO:
-                        socket.write('250 localhost, greeting accepted.\r\n');
-                        break;
-                    case SMTPCommand.MAIL:
-                        if (args.startsWith('FROM:<') && args.endsWith('>')) {
-                            from = args.substring(6, args.length - 1);
-                            socket.write('250 Ok\r\n');   
-                        } else {
-                            socket.write('501 Argument syntax error\r\n');
-                        }
-                        break;
-                    case SMTPCommand.RCPT:
-                        if (args.startsWith('TO:<') && args.endsWith('>')) {
-                            recipients.push(args.substring(4, args.length - 1));
-                            socket.write('250 Ok\r\n');   
-                        } else {
-                            socket.write('501 Argument syntax error\r\n');
-                        }
-                        break;
-                    case SMTPCommand.DATA:
-                        if (recipients.length > 0 && from) {
-                            socket.write('354 End data with <CR><LF>.<CR><LF>\r\n');
-                            receiveData = true;
-                        } else {
-                            socket.write('503 Bad sequence\r\n');
-                        }
-                        break;
-                    case SMTPCommand.QUIT:
-                        socket.write('221 Bye\r\n');
-                        break;
-                    default:
-                        socket.write('502 Not implemented\r\n');
+        const ending = '\r\n';
+
+        socket.on('error', err => {
+            // For now, ignore.
+        });
+
+        socket.on('data', data => {
+            const string = data.toString();
+            
+            if (!receiveData && string.includes(ending)) {
+                const commands = string.split(ending);
+                commands[0] = buffer + commands[0];
+                buffer = '';
+
+                for (let i = 0; i < commands.length - 1; i++) {
+                    const [ command, args ] = commands[i].split(' ', 2);
+                    
+                    switch (command) {
+                        case SMTPCommand.HELO:
+                            socket.write('250 localhost, greeting accepted.\r\n');
+                            break;
+                        case SMTPCommand.MAIL:
+                            if (args.startsWith('FROM:<') && args.endsWith('>')) {
+                                sender = args.substring(6, args.length - 1);
+                                socket.write('250 Ok\r\n');   
+                            } else {
+                                socket.write('501 Argument syntax error\r\n');
+                            }
+                            break;
+                        case SMTPCommand.RCPT:
+                            if (args.startsWith('TO:<') && args.endsWith('>')) {
+                                recipients.push(args.substring(4, args.length - 1));
+                                socket.write('250 Ok\r\n');   
+                            } else {
+                                socket.write('501 Argument syntax error\r\n');
+                            }
+                            break;
+                        case SMTPCommand.DATA:
+                            if (recipients.length > 0 && sender) {
+                                socket.write('354 End data with <CR><LF>.<CR><LF>\r\n');
+                                receiveData = true;
+                            } else {
+                                socket.write('503 Bad sequence\r\n');
+                            }
+                            break;
+                        case SMTPCommand.QUIT:
+                            socket.write('221 Bye\r\n');
+                            break;
+                        default:
+                            socket.write('502 Not implemented\r\n');
+                    }
+                }
+
+                if (!string.endsWith(ending)) {
+                    buffer = commands[commands.length - 1];
+                }
+            } else {
+                if (receiveData && (buffer + string).includes('\r\n.\r\n')) {
+                    this.message(recipients, sender, buffer + string);
+                    buffer = '';
+                    receiveData = false;
+                    socket.write('250 Ok\r\n');
+                } else {
+                    buffer += string;
                 }
             }
-
-            if (!string.endsWith(ending)) {
-                buffer = commands[commands.length - 1];
-            }
-        } else {
-            if (receiveData && (buffer + string).includes('\r\n.\r\n')) {
-                buffer = '';
-                receiveData = false;
-                socket.write('250 Ok\r\n');
-            } else {
-                buffer += string;
-            }
-        }
-    });
-});
-
-server.listen(25);
+        });
+    }
+}
