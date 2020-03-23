@@ -22,7 +22,11 @@ export class microMTA {
 
     private connection(socket: Socket) {
         socket.setEncoding('utf8');
-        socket.write('220 localhost ESMTP microMTA\r\n');
+        const reply = (code: number, message: string) => {
+            socket.write(code + ' ' + message + '\r\n');
+        };
+
+        reply(220, 'localhost ESMTP microMTA');
         
         let buffer = '';
         let receiveData = false;
@@ -48,37 +52,37 @@ export class microMTA {
                     
                     switch (command) {
                         case SMTPCommand.HELO:
-                            socket.write('250 localhost, greeting accepted.\r\n');
+                            reply(250, 'localhost, greeting accepted.');
                             break;
                         case SMTPCommand.MAIL:
                             if (args.startsWith('FROM:<') && args.endsWith('>')) {
                                 sender = args.substring(6, args.length - 1);
-                                socket.write('250 Ok\r\n');   
+                                reply(250, 'Ok');
                             } else {
-                                socket.write('501 Argument syntax error\r\n');
+                                reply(501, 'Argument syntax error');
                             }
                             break;
                         case SMTPCommand.RCPT:
                             if (args.startsWith('TO:<') && args.endsWith('>')) {
                                 recipients.push(args.substring(4, args.length - 1));
-                                socket.write('250 Ok\r\n');   
+                                reply(250, 'Ok');
                             } else {
-                                socket.write('501 Argument syntax error\r\n');
+                                reply(501, 'Argument syntax error');
                             }
                             break;
                         case SMTPCommand.DATA:
                             if (recipients.length > 0 && sender) {
-                                socket.write('354 End data with <CR><LF>.<CR><LF>\r\n');
+                                reply(354, 'End data with <CR><LF>.<CR><LF>');
                                 receiveData = true;
                             } else {
-                                socket.write('503 Bad sequence\r\n');
+                                reply(503, 'Bad sequence');
                             }
                             break;
                         case SMTPCommand.QUIT:
-                            socket.write('221 Bye\r\n');
+                            reply(221, 'Bye');
                             break;
                         default:
-                            socket.write('502 Not implemented\r\n');
+                            reply(502, 'Not implemented');
                     }
                 }
 
@@ -90,7 +94,7 @@ export class microMTA {
                     this.message(recipients, sender, buffer + string);
                     buffer = '';
                     receiveData = false;
-                    socket.write('250 Ok\r\n');
+                    reply(250, 'Ok');
                 } else {
                     buffer += string;
                 }
