@@ -17,9 +17,8 @@ export class microMTAConnection {
                 private options: microMTAOptions,
                 private onMessage: (message: microMTAMessage) => void,
                 private onError: (error: Error) => void) {
-
-        socket.setEncoding('utf8');
-
+        this.socket.setEncoding('ascii');
+        
         // Welcome message.
         this.reply(220, this.options.hostname + ' ESMTP microMTA');
 
@@ -28,7 +27,18 @@ export class microMTAConnection {
     }
 
     private reply(code: number, message: string) {
-        this.socket.write(code + ' ' + message + ending);
+        if (message.includes('\n')) {
+            const lines = message.split('\n');
+            for (let i = 0; i < lines.length; i++) {
+                if (i === lines.length - 1) {
+                    this.socket.write(code + ' ' + lines[i] + ending);
+                } else {
+                    this.socket.write(code + '-' + lines[i] + ending);
+                }
+            }
+        } else {
+            this.socket.write(code + ' ' + message + ending);
+        }
     }
 
     private handleData(data: Buffer) {
@@ -90,6 +100,11 @@ export class microMTAConnection {
             case SMTPCommand.HELO:
                 // HELO hostname
                 this.reply(250, this.options.hostname + ', greeting accepted.');
+                break;
+            case SMTPCommand.EHLO:
+                // EHLO hostname
+                this.socket.setEncoding('utf8');
+                this.reply(250, this.options.hostname + ', greeting accepted.\nSMTPUTF8\nPIPELINING\nSIZE 10000000');
                 break;
             case SMTPCommand.MAIL:
                 // MAIL FROM:<user@example.com>
