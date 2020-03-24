@@ -61,10 +61,20 @@ export class microMTAConnection {
 
     private handleMessage() {
         if (this.sender) {
+            let message = this.buffer;
+
+            // Remove last 5 characters (ending indicator).
+            message = message.substring(0, this.buffer.length - 5);
+
+            // Undo dot stuffing.
+            message = message.split('\r\n')
+                            .map(line => line.startsWith('..') ? line.substring(1) : line)
+                            .join('\r\n');
+
             this.onMessage({
                 recipients: this.recipients,
                 sender: this.sender,
-                message: this.buffer.substring(0, this.buffer.length - 5), // Remove last 5 characters (ending indicator).
+                message,
             } as microMTAMessage);
             this.reply(250, 'Ok');
         } else {
