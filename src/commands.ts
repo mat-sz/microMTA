@@ -4,5 +4,7 @@ export enum SMTPCommand {
     MAIL = 'MAIL',
     RCPT = 'RCPT',
     DATA = 'DATA',
+    NOOP = 'NOOP',
+    RSET = 'RSET',
     QUIT = 'QUIT',
 };

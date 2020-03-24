@@ -133,9 +133,18 @@ export class microMTAConnection {
                     this.reply(503, 'Bad sequence');
                 }
                 break;
+            case SMTPCommand.RSET:
+                this.recipients = [];
+                this.sender = undefined;
+                this.reply(250, 'Ok');
+                break;
+            case SMTPCommand.NOOP:
+                this.reply(250, 'Ok');
+                break;
             case SMTPCommand.QUIT:
                 // QUIT
                 this.reply(221, 'Bye');
+                this.socket.destroy();
                 break;
             default:
                 this.reply(502, 'Not implemented');
