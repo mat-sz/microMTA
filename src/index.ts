@@ -56,24 +56,12 @@ export class microMTA {
         }
     }
 
-    private message(recipients: string[], sender: string, message: string) {
-        this.emit('message', {
-            recipients,
-            sender,
-            message,
-        } as microMTAMessage);
-    }
-
-    private error(error: Error) {
-        this.emit('error', error);
-    }
-
     private connection(socket: Socket) {
         new microMTAConnection(
             socket,
             this.options,
-            this.message.bind(this),
-            this.error.bind(this)
+            message => this.emit('message', message),
+            error => this.emit('error', error),
         );
     }
 }
