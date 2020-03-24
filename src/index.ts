@@ -1,9 +1,9 @@
 import { createServer, Server, Socket } from 'net';
 
-import { SMTPCommand } from './commands';
 import { microMTAEvents, microMTAErrorEventListener, microMTAMessageEventListener } from './events';
 import { microMTAMessage } from './message';
 import { microMTAOptions } from './options';
+import { microMTAConnection } from './connection';
 
 export class microMTA {
     private server: Server;
@@ -69,82 +69,11 @@ export class microMTA {
     }
 
     private connection(socket: Socket) {
-        socket.setEncoding('utf8');
-        const reply = (code: number, message: string) => {
-            socket.write(code + ' ' + message + '\r\n');
-        };
-
-        reply(220, this.options.hostname + ' ESMTP microMTA');
-        
-        let buffer = '';
-        let receiveData = false;
-        let recipients: string[] = [];
-        let sender: string;
-
-        const ending = '\r\n';
-
-        socket.on('error', err => this.error(err));
-
-        socket.on('data', data => {
-            const string = data.toString();
-            
-            if (!receiveData && string.includes(ending)) {
-                const commands = string.split(ending);
-                commands[0] = buffer + commands[0];
-                buffer = '';
-
-                for (let i = 0; i < commands.length - 1; i++) {
-                    const [ command, args ] = commands[i].split(' ', 2);
-                    
-                    switch (command) {
-                        case SMTPCommand.HELO:
-                            reply(250, this.options.hostname + ', greeting accepted.');
-                            break;
-                        case SMTPCommand.MAIL:
-                            if (args.startsWith('FROM:<') && args.endsWith('>')) {
-                                sender = args.substring(6, args.length - 1);
-                                reply(250, 'Ok');
-                            } else {
-                                reply(501, 'Argument syntax error');
-                            }
-                            break;
-                        case SMTPCommand.RCPT:
-                            if (args.startsWith('TO:<') && args.endsWith('>')) {
-                                recipients.push(args.substring(4, args.length - 1));
-                                reply(250, 'Ok');
-                            } else {
-                                reply(501, 'Argument syntax error');
-                            }
-                            break;
-                        case SMTPCommand.DATA:
-                            if (recipients.length > 0 && sender) {
-                                reply(354, 'End data with <CR><LF>.<CR><LF>');
-                                receiveData = true;
-                            } else {
-                                reply(503, 'Bad sequence');
-                            }
-                            break;
-                        case SMTPCommand.QUIT:
-                            reply(221, 'Bye');
-                            break;
-                        default:
-                            reply(502, 'Not implemented');
-                    }
-                }
-
-                if (!string.endsWith(ending)) {
-                    buffer = commands[commands.length - 1];
-                }
-            } else {
-                if (receiveData && (buffer + string).includes('\r\n.\r\n')) {
-                    this.message(recipients, sender, buffer + string);
-                    buffer = '';
-                    receiveData = false;
-                    reply(250, 'Ok');
-                } else {
-                    buffer += string;
-                }
-            }
-        });
+        new microMTAConnection(
+            socket,
+            this.options,
+            this.message.bind(this),
+            this.error.bind(this)
+        );
     }
 }
