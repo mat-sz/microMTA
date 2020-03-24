@@ -20,6 +20,7 @@ export class microMTAConnection {
 
         socket.setEncoding('utf8');
 
+        // Welcome message.
         this.reply(220, this.options.hostname + ' ESMTP microMTA');
 
         socket.on('error', err => this.onError(err));
@@ -37,15 +38,21 @@ export class microMTAConnection {
             const commands = string.split(ending);
             commands[0] = this.buffer + commands[0];
 
+            // Execute any commands we find in the buffer.
+            // Sometimes the text data may be divided
+            // between multiple data events.
             for (let i = 0; i < commands.length - 1; i++) {
                 const [ command, argument ] = commands[i].split(' ', 2);
                 this.handleCommand(command, argument);
             }
 
+            // Store the incomplete command (or '') as the new buffer.
             this.buffer = commands[commands.length - 1];
         } else {
             this.buffer += string;
 
+            // If a DATA message was sent, store all the
+            // incoming contents awaiting an ending.
             if (this.isData && this.buffer.includes(dataEnding)) {
                 this.handleMessage();
             }
@@ -57,7 +64,7 @@ export class microMTAConnection {
             this.onMessage({
                 recipients: this.recipients,
                 sender: this.sender,
-                message: this.buffer.substring(0, this.buffer.length - 5),
+                message: this.buffer.substring(0, this.buffer.length - 5), // Remove last 5 characters (ending indicator).
             } as microMTAMessage);
             this.reply(250, 'Ok');
         } else {
@@ -71,9 +78,11 @@ export class microMTAConnection {
     private handleCommand(command: string, argument: string) {
         switch (command) {
             case SMTPCommand.HELO:
+                // HELO hostname
                 this.reply(250, this.options.hostname + ', greeting accepted.');
                 break;
             case SMTPCommand.MAIL:
+                // MAIL FROM:<user@example.com>
                 if (argument.startsWith('FROM:<') && argument.endsWith('>')) {
                     this.sender = argument.substring(6, argument.length - 1);
                     this.reply(250, 'Ok');
@@ -82,6 +91,7 @@ export class microMTAConnection {
                 }
                 break;
             case SMTPCommand.RCPT:
+                // RCPT TO:<user@example.com>
                 if (argument.startsWith('TO:<') && argument.endsWith('>')) {
                     this.recipients.push(argument.substring(4, argument.length - 1));
                     this.reply(250, 'Ok');
@@ -90,6 +100,7 @@ export class microMTAConnection {
                 }
                 break;
             case SMTPCommand.DATA:
+                // DATA
                 if (this.recipients.length > 0 && this.sender) {
                     this.reply(354, 'End data with <CR><LF>.<CR><LF>');
                     this.isData = true;
@@ -98,6 +109,7 @@ export class microMTAConnection {
                 }
                 break;
             case SMTPCommand.QUIT:
+                // QUIT
                 this.reply(221, 'Bye');
                 break;
             default:
