@@ -6,7 +6,7 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "prepare": "npm run build",
-    "start": "ts-node-dev --respawn --transpileOnly src/index.ts",
+    "start": "ts-node-dev --respawn --transpileOnly src/run.ts",
     "build": "tsc"
   },
   "repository": {
