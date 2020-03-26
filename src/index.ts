@@ -27,20 +27,7 @@ export class microMTA {
     };
 
     this.server = createServer(socket => this.connection(socket));
-  }
-
-  /**
-   * Starts the server at port 25. Requires elevated privileges on most systems.
-   */
-  start() {
     this.server.listen(25);
-  }
-
-  /**
-   * Stops the server.
-   */
-  stop() {
-    this.server.close();
   }
 
   /**

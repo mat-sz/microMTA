@@ -9,5 +9,4 @@ Only receiving mail is (and will be) supported. This library has only one purpos
 ```js
 const mta = new microMTA();
 mta.on('message', message => console.log(message));
-mta.start();
 ```
