@@ -4,6 +4,14 @@
   "description": "Lightweight Mail Transfer Agent for node.js",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
+  "keywords": [
+    "email",
+    "mail",
+    "mta",
+    "smtp",
+    "server",
+    "typescript"
+  ],
   "scripts": {
     "prepare": "npm run build",
     "start": "ts-node-dev --respawn --transpileOnly src/run.ts",
