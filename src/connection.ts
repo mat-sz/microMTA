@@ -55,7 +55,7 @@ export class microMTAConnection {
       // between multiple data events.
       for (let i = 0; i < commands.length - 1; i++) {
         const [command, argument] = commands[i].split(' ', 2);
-        this.handleCommand(command, argument);
+        this.handleCommand(command.toUpperCase(), argument);
       }
 
       // Store the incomplete command (or '') as the new buffer.
@@ -99,6 +99,8 @@ export class microMTAConnection {
   }
 
   private handleCommand(command: string, argument: string) {
+    const args = argument ? argument.replace(': ', '').split(' ') : [];
+
     switch (command) {
       case SMTPCommand.HELO:
         // HELO hostname
@@ -115,7 +117,11 @@ export class microMTAConnection {
         break;
       case SMTPCommand.MAIL:
         // MAIL FROM:<user@example.com>
-        if (argument.startsWith('FROM:<') && argument.endsWith('>')) {
+        if (
+          args.length > 0 &&
+          args[0].startsWith('FROM:<') &&
+          args[0].endsWith('>')
+        ) {
           this.sender = argument.substring(6, argument.length - 1);
           this.reply(250, 'Ok');
         } else {
@@ -124,7 +130,11 @@ export class microMTAConnection {
         break;
       case SMTPCommand.RCPT:
         // RCPT TO:<user@example.com>
-        if (argument.startsWith('TO:<') && argument.endsWith('>')) {
+        if (
+          args.length > 0 &&
+          args[0].startsWith('TO:<') &&
+          args[0].endsWith('>')
+        ) {
           this.recipients.push(argument.substring(4, argument.length - 1));
           this.reply(250, 'Ok');
         } else {
