@@ -18,6 +18,7 @@ export class microMTA {
 
   private options: microMTAOptions = {
     hostname: 'localhost',
+    ip: '0.0.0.0',
     port: 25,
   };
 
@@ -28,7 +29,7 @@ export class microMTA {
     };
 
     this.server = createServer(socket => this.connection(socket));
-    this.server.listen(this.options.port);
+    this.server.listen(this.options.port, this.options.ip);
   }
 
   /**
