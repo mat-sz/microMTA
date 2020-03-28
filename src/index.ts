@@ -20,6 +20,7 @@ export class microMTA {
     hostname: 'localhost',
     ip: '0.0.0.0',
     port: 25,
+    size: 10000000,
   };
 
   constructor(options?: microMTAOptions) {

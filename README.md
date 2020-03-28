@@ -28,3 +28,4 @@ The constructor for `microMTA` accepts an options object.
 | `ip`       | `0.0.0.0`     | IP address to bind to.                                                    |
 | `port`     | `25`          | Port to bind to. (Ports under 1024 usually require superuser privileges.) |
 | `hostname` | `localhost`   | Hostname advertised by the SMTP server.                                   |
+| `size`     | `1000000`     | Maximum message size (in bytes).                                          |

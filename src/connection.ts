@@ -6,6 +6,7 @@ import { SMTPCommand } from './commands';
 
 const ending = '\r\n';
 const dataEnding = '\r\n.\r\n';
+const defaultSize = 1000000;
 
 export class microMTAConnection {
   private buffer = '';
@@ -54,8 +55,9 @@ export class microMTAConnection {
       // Sometimes the text data may be divided
       // between multiple data events.
       for (let i = 0; i < commands.length - 1; i++) {
-        const [command, argument] = commands[i].split(' ', 2);
-        this.handleCommand(command.toUpperCase(), argument);
+        const args = commands[i].split(' ');
+        const command = args.splice(0, 1)[0];
+        this.handleCommand(command.toUpperCase(), args);
       }
 
       // Store the incomplete command (or '') as the new buffer.
@@ -63,10 +65,17 @@ export class microMTAConnection {
     } else {
       this.buffer += string;
 
-      // If a DATA message was sent, store all the
-      // incoming contents awaiting an ending.
-      if (this.isData && this.buffer.includes(dataEnding)) {
-        this.handleMessage();
+      if (this.isData) {
+        if (this.buffer.length > (this.options.size ?? defaultSize)) {
+          this.buffer = '';
+          this.reply(552, 'Maximum size exceeded');
+        }
+
+        // If a DATA message was sent, store all the
+        // incoming contents awaiting an ending.
+        if (this.buffer.includes(dataEnding)) {
+          this.handleMessage();
+        }
       }
     }
   }
@@ -98,9 +107,7 @@ export class microMTAConnection {
     this.isData = false;
   }
 
-  private handleCommand(command: string, argument: string) {
-    const args = argument ? argument.replace(': ', '').split(' ') : [];
-
+  private handleCommand(command: string, args: string[]) {
     switch (command) {
       case SMTPCommand.HELO:
         // HELO hostname
@@ -112,7 +119,8 @@ export class microMTAConnection {
         this.reply(
           250,
           this.options.hostname +
-            ', greeting accepted.\nSMTPUTF8\nPIPELINING\nSIZE 10000000'
+            ', greeting accepted.\nSMTPUTF8\nPIPELINING\nSIZE ' +
+            (this.options.size ?? defaultSize)
         );
         break;
       case SMTPCommand.MAIL:
@@ -122,7 +130,21 @@ export class microMTAConnection {
           args[0].startsWith('FROM:<') &&
           args[0].endsWith('>')
         ) {
-          this.sender = argument.substring(6, argument.length - 1);
+          let size = 0;
+          if (args.length > 1) {
+            for (let arg of args) {
+              if (arg.toUpperCase().startsWith('SIZE=')) {
+                size = parseInt(arg.substring(5));
+              }
+            }
+          }
+
+          if (size && size > (this.options.size ?? defaultSize)) {
+            this.reply(552, 'Maximum size exceeded');
+            break;
+          }
+
+          this.sender = args[0].substring(6, args[0].length - 1);
           this.reply(250, 'Ok');
         } else {
           this.reply(501, 'Argument syntax error');
@@ -135,7 +157,7 @@ export class microMTAConnection {
           args[0].startsWith('TO:<') &&
           args[0].endsWith('>')
         ) {
-          this.recipients.push(argument.substring(4, argument.length - 1));
+          this.recipients.push(args[0].substring(4, args[0].length - 1));
           this.reply(250, 'Ok');
         } else {
           this.reply(501, 'Argument syntax error');
