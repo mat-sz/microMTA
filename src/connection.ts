@@ -10,7 +10,8 @@ const defaultSize = 1000000;
 
 export class microMTAConnection {
   private buffer = '';
-  private isData = false;
+  private greeted = false;
+  private isAcceptingData = false;
   private recipients: string[] = [];
   private sender?: string;
 
@@ -47,7 +48,7 @@ export class microMTAConnection {
   private handleData(data: Buffer) {
     const string = data.toString();
 
-    if (!this.isData && string.includes(ending)) {
+    if (!this.isAcceptingData && string.includes(ending)) {
       const commands = string.split(ending);
       commands[0] = this.buffer + commands[0];
 
@@ -65,7 +66,7 @@ export class microMTAConnection {
     } else {
       this.buffer += string;
 
-      if (this.isData) {
+      if (this.isAcceptingData) {
         if (this.buffer.length > (this.options.size ?? defaultSize)) {
           this.buffer = '';
           this.reply(552, 'Maximum size exceeded');
@@ -104,24 +105,41 @@ export class microMTAConnection {
     }
 
     this.buffer = '';
-    this.isData = false;
+    this.isAcceptingData = false;
   }
 
   private handleCommand(command: string, args: string[]) {
+    if (!this.greeted) {
+      switch (command) {
+        case SMTPCommand.HELO:
+          // HELO hostname
+          this.reply(250, this.options.hostname + ', greeting accepted.');
+
+          this.greeted = true;
+          break;
+        case SMTPCommand.EHLO:
+          // EHLO hostname
+          this.socket.setEncoding('utf8');
+          this.reply(
+            250,
+            this.options.hostname +
+              ', greeting accepted.\nSMTPUTF8\nPIPELINING\nSIZE ' +
+              (this.options.size ?? defaultSize)
+          );
+
+          this.greeted = true;
+          break;
+        default:
+          this.reply(503, 'Bad sequence');
+      }
+
+      return;
+    }
+
     switch (command) {
       case SMTPCommand.HELO:
-        // HELO hostname
-        this.reply(250, this.options.hostname + ', greeting accepted.');
-        break;
       case SMTPCommand.EHLO:
-        // EHLO hostname
-        this.socket.setEncoding('utf8');
-        this.reply(
-          250,
-          this.options.hostname +
-            ', greeting accepted.\nSMTPUTF8\nPIPELINING\nSIZE ' +
-            (this.options.size ?? defaultSize)
-        );
+        this.reply(503, 'Bad sequence');
         break;
       case SMTPCommand.MAIL:
         // MAIL FROM:<user@example.com>
@@ -167,7 +185,7 @@ export class microMTAConnection {
         // DATA
         if (this.recipients.length > 0 && this.sender) {
           this.reply(354, 'End data with <CR><LF>.<CR><LF>');
-          this.isData = true;
+          this.isAcceptingData = true;
         } else {
           this.reply(503, 'Bad sequence');
         }
