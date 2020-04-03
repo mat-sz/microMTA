@@ -4,3 +4,5 @@ jest.config.js
 yarn-error.log
 yarn.lock
 .prettierrc
+tsconfig.json
+logo.png
