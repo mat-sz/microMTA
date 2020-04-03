@@ -14,7 +14,6 @@
   ],
   "scripts": {
     "prepare": "npm run build",
-    "dev": "ts-node-dev --respawn --transpileOnly src/run.ts",
     "build": "tsc"
   },
   "repository": {
