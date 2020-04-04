@@ -14,7 +14,8 @@
   ],
   "scripts": {
     "prepare": "npm run build",
-    "build": "tsc"
+    "build": "tsc",
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -31,16 +32,22 @@
   "lint-staged": {
     "src/**/*.{js,jsx,ts,tsx,json,css,scss,md}": [
       "prettier --write"
+    ],
+    "__tests__/**/*.{js,jsx,ts,tsx,json,css,scss,md}": [
+      "prettier --write"
     ]
   },
   "homepage": "https://github.com/mat-sz/microMTA",
   "author": "Mat Sz <contact@matsz.dev>",
   "license": "BSD-3-Clause-Clear",
   "devDependencies": {
+    "@types/jest": "^25.2.1",
     "@types/node": "^13.1.4",
     "husky": "^4.2.3",
+    "jest": "^25.2.7",
     "lint-staged": "^10.0.9",
     "prettier": "^2.0.2",
+    "ts-jest": "^25.3.1",
     "ts-node-dev": "^1.0.0-pre.44",
     "typescript": "^3.7.4"
   }
