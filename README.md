@@ -19,6 +19,18 @@ const mta = new microMTA();
 mta.on('message', message => console.log(message));
 ```
 
+`message` will be of type _microMTAMessage_:
+
+```ts
+export interface microMTAMessage {
+  recipients: string[];
+  sender: string;
+  message: string;
+}
+```
+
+The `message` is a raw RFC 822 (and any related RFCs) message that needs to be parsed. [letterparser](https://github.com/mat-sz/letterparser) can be used to parse and extract data from the raw messages.
+
 ## Options
 
 The constructor for `microMTA` accepts an options object.
