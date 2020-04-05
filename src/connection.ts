@@ -123,7 +123,7 @@ export class microMTAConnection {
           this.reply(
             250,
             this.options.hostname +
-              ', greeting accepted.\nSMTPUTF8\nPIPELINING\nSIZE ' +
+              ', greeting accepted.\nSMTPUTF8\nPIPELINING\n8BITMIME\nSIZE ' +
               (this.options.size ?? defaultSize)
           );
 
