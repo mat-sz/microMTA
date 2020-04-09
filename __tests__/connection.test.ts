@@ -26,6 +26,7 @@ describe('connection', () => {
       socket as any,
       { hostname: 'localhost', size: 100000 },
       () => {},
+      () => {},
       () => {}
     );
 
