@@ -4,6 +4,7 @@ import {
   microMTAEvents,
   microMTAErrorEventListener,
   microMTAMessageEventListener,
+  microMTARejectedEventListener,
 } from './events';
 import { microMTAOptions } from './options';
 import { microMTAConnection } from './connection';
@@ -14,6 +15,7 @@ export class microMTA {
   private events: microMTAEvents = {
     message: new Set(),
     error: new Set(),
+    rejected: new Set(),
   };
 
   private options: microMTAOptions = {
@@ -32,6 +34,13 @@ export class microMTA {
     this.server = createServer(socket => this.connection(socket));
     this.server.listen(this.options.port, this.options.ip);
   }
+
+  /**
+   * Adds a listener for a rejected message event.
+   * @param eventType Event type. (rejected)
+   * @param listener Listener function.
+   */
+  on(eventType: 'rejected', listener: microMTARejectedEventListener): void;
 
   /**
    * Adds a listener for a message event.
@@ -55,6 +64,13 @@ export class microMTA {
   on(eventType: keyof microMTAEvents, listener: Function) {
     this.events[eventType].add(listener as any);
   }
+
+  /**
+   * Removes a listener for a message event.
+   * @param eventType Event type. (message)
+   * @param listener Listener function.
+   */
+  off(eventType: 'rejected', listener: microMTARejectedEventListener): void;
 
   /**
    * Removes a listener for a message event.
@@ -90,7 +106,8 @@ export class microMTA {
       socket,
       this.options,
       message => this.emit('message', message),
-      error => this.emit('error', error)
+      error => this.emit('error', error),
+      (sender, recipients) => this.emit('rejected', sender, recipients)
     );
   }
 }

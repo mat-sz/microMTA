@@ -19,7 +19,8 @@ export class microMTAConnection {
     private socket: Socket,
     private options: microMTAOptions,
     private onMessage: (message: microMTAMessage) => void,
-    private onError: (error: Error) => void
+    private onError: (error: Error) => void,
+    private onRejected: (sender: string, recipients: string[]) => void
   ) {
     this.socket.setEncoding('ascii');
 
@@ -157,12 +158,14 @@ export class microMTAConnection {
             }
           }
 
+          const sender = args[0].substring(6, args[0].length - 1);
           if (size && size > (this.options.size ?? defaultSize)) {
             this.reply(552, 'Maximum size exceeded');
+            this.onRejected(sender, this.recipients);
             break;
           }
 
-          this.sender = args[0].substring(6, args[0].length - 1);
+          this.sender = sender;
           this.reply(250, 'Ok');
         } else {
           this.reply(501, 'Argument syntax error');
