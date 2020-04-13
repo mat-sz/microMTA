@@ -22,7 +22,7 @@ export class microMTAConnection {
     private onError: (error: Error) => void,
     private onRejected: (sender: string, recipients: string[]) => void
   ) {
-    this.socket.setEncoding('ascii');
+    this.socket.setEncoding('utf8');
 
     // Welcome message.
     this.reply(220, this.options.hostname + ' ESMTP microMTA');
@@ -120,7 +120,6 @@ export class microMTAConnection {
           break;
         case SMTPCommand.EHLO:
           // EHLO hostname
-          this.socket.setEncoding('utf8');
           this.reply(
             250,
             this.options.hostname +
