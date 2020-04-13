@@ -1,6 +1,6 @@
 {
   "name": "micromta",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Lightweight Mail Transfer Agent (SMTP server) for node.js. Inbound mail only.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
