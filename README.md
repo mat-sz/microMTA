@@ -8,7 +8,7 @@ microMTA / µMTA
 
 microMTA is a [Mail Transfer Agent (MTA)](https://en.wikipedia.org/wiki/Message_transfer_agent) library for node.js that focuses on receiving messages. The only feature of microMTA is message receiving. No sending or relaying will be possible since the library itself is not designed to handle that.
 
-microMTA was created for testing e-mail sending in an application, by mocking a SMTP server. By default it runs on port 25 (which requires superuser privileges or an authbind/setcap setup).
+microMTA was created for [testing e-mail sending](https://github.com/mat-sz/catchmail-ws) in an application, by mocking a SMTP server. By default it runs on port 25 (which requires superuser privileges or an authbind/setcap setup).
 
 The library is available in [npm](https://npmjs.org/package/micromta), use `yarn add micromta` or `npm install micromta` to install.
 
