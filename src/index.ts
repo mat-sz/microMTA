@@ -12,6 +12,8 @@ import { microMTAConnection } from './connection';
 export class microMTA {
   private server: Server;
 
+  private connections: Set<microMTAConnection> = new Set();
+
   private events: microMTAEvents = {
     message: new Set(),
     error: new Set(),
@@ -33,6 +35,8 @@ export class microMTA {
 
     this.server = createServer(socket => this.connection(socket));
     this.server.listen(this.options.port, this.options.ip);
+
+    setInterval(this.pruneConnections.bind(this), 1000);
   }
 
   /**
@@ -102,12 +106,22 @@ export class microMTA {
   }
 
   private connection(socket: Socket) {
-    new microMTAConnection(
-      socket,
-      this.options,
-      message => this.emit('message', message),
-      error => this.emit('error', error),
-      (sender, recipients) => this.emit('rejected', sender, recipients)
+    this.connections.add(
+      new microMTAConnection(
+        socket,
+        this.options,
+        message => this.emit('message', message),
+        error => this.emit('error', error),
+        (sender, recipients) => this.emit('rejected', sender, recipients)
+      )
     );
+  }
+
+  private pruneConnections() {
+    this.connections.forEach(connection => {
+      if (!connection.isOpen) {
+        this.connections.delete(connection);
+      }
+    });
   }
 }

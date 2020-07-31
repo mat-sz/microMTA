@@ -10,6 +10,7 @@ const defaultSize = 1000000;
 
 export class microMTAConnection {
   private buffer = '';
+  private open = false;
   private greeted = false;
   private isAcceptingData = false;
   private recipients: string[] = [];
@@ -23,15 +24,22 @@ export class microMTAConnection {
     private onRejected: (sender: string, recipients: string[]) => void
   ) {
     this.socket.setEncoding('utf8');
+    this.open = true;
 
     // Welcome message.
     this.reply(220, this.options.hostname + ' ESMTP microMTA');
 
     socket.on('error', err => this.onError(err));
     socket.on('data', data => this.handleData(data));
+    socket.on('close', () => (this.open = false));
+    socket.on('end', () => (this.open = false));
   }
 
-  private reply(code: number, message: string) {
+  get isOpen() {
+    return this.open;
+  }
+
+  reply(code: number, message: string) {
     if (message.includes('\n')) {
       const lines = message.split('\n');
       for (let i = 0; i < lines.length; i++) {
@@ -204,6 +212,7 @@ export class microMTAConnection {
         // QUIT
         this.reply(221, 'Bye');
         this.socket.destroy();
+        this.open = false;
         break;
       default:
         this.reply(502, 'Not implemented');
