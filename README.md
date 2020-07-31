@@ -17,6 +17,9 @@ The library is available in [npm](https://npmjs.org/package/micromta), use `yarn
 ```js
 const mta = new microMTA();
 mta.on('message', message => console.log(message));
+
+// Later:
+mta.close();
 ```
 
 `message` will be of type _microMTAMessage_:

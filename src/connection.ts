@@ -39,6 +39,11 @@ export class microMTAConnection {
     return this.open;
   }
 
+  close() {
+    this.socket.destroy();
+    this.open = false;
+  }
+
   reply(code: number, message: string) {
     if (message.includes('\n')) {
       const lines = message.split('\n');

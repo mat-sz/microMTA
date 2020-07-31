@@ -39,6 +39,17 @@ export class microMTA {
     setInterval(this.pruneConnections.bind(this), 1000);
   }
 
+  close() {
+    this.connections.forEach(connection => {
+      if (connection.isOpen) {
+        connection.reply(421, 'The server is shutting down.');
+        connection.close();
+      }
+    });
+
+    this.server.close();
+  }
+
   /**
    * Adds a listener for a rejected message event.
    * @param eventType Event type. (rejected)
