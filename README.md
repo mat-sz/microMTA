@@ -12,6 +12,10 @@ microMTA was created for [testing e-mail sending](https://github.com/mat-sz/catc
 
 The library is available in [npm](https://npmjs.org/package/micromta), use `yarn add micromta` or `npm install micromta` to install.
 
+| Parser                                                 | Builder                                                  |
+| ------------------------------------------------------ | -------------------------------------------------------- |
+| [letterparser](https://github.com/mat-sz/letterparser) | [letterbuilder](https://github.com/mat-sz/letterbuilder) |
+
 ## Example
 
 ```js
