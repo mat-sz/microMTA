@@ -3,6 +3,7 @@ import { Socket } from 'net';
 import { microMTAMessage } from './message';
 import { microMTAOptions } from './options';
 import { SMTPCommand } from './commands';
+import { TLSSocket, createSecureContext } from 'tls';
 
 const ending = '\r\n';
 const dataEnding = '\r\n.\r\n';
@@ -28,11 +29,7 @@ export class microMTAConnection {
 
     // Welcome message.
     this.reply(220, this.options.hostname + ' ESMTP microMTA');
-
-    socket.on('error', err => this.onError(err));
-    socket.on('data', data => this.handleData(data));
-    socket.on('close', () => (this.open = false));
-    socket.on('end', () => (this.open = false));
+    this.addListeners(socket);
   }
 
   get isOpen() {
@@ -57,6 +54,35 @@ export class microMTAConnection {
     } else {
       this.socket.write(code + ' ' + message + ending);
     }
+  }
+
+  private addListeners(socket: Socket) {
+    socket.on('error', err => this.onError(err));
+    socket.on('data', data => this.handleData(data));
+    socket.on('close', () => (this.open = false));
+    socket.on('end', () => (this.open = false));
+  }
+
+  private starttls() {
+    if (!this.options.tls) {
+      return;
+    }
+
+    this.socket.removeAllListeners('error');
+
+    const secureContext = createSecureContext(this.options.tls);
+
+    const tlsSocket = new TLSSocket(this.socket, {
+      secureContext,
+      rejectUnauthorized: true,
+      isServer: true,
+    });
+    tlsSocket.setEncoding('utf8');
+    this.socket = tlsSocket;
+
+    tlsSocket.on('secureConnect', () => {
+      this.addListeners(tlsSocket);
+    });
   }
 
   private handleData(data: Buffer) {
@@ -153,6 +179,15 @@ export class microMTAConnection {
       case SMTPCommand.HELO:
       case SMTPCommand.EHLO:
         this.reply(503, 'Bad sequence');
+        break;
+      case SMTPCommand.STARTTLS:
+        if (!this.options.tls) {
+          this.reply(502, 'Not supported');
+          break;
+        }
+
+        this.reply(220, 'TLS go ahead');
+        this.starttls();
         break;
       case SMTPCommand.MAIL:
         // MAIL FROM:<user@example.com>

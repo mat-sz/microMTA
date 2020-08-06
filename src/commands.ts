@@ -7,4 +7,5 @@ export enum SMTPCommand {
   NOOP = 'NOOP',
   RSET = 'RSET',
   QUIT = 'QUIT',
+  STARTTLS = 'STARTTLS',
 }

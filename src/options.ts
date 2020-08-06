@@ -3,4 +3,8 @@ export interface microMTAOptions {
   port?: number;
   ip?: string;
   size?: number;
+  tls?: {
+    key: string;
+    cert: string;
+  };
 }

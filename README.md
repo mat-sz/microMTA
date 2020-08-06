@@ -48,6 +48,7 @@ The constructor for `microMTA` accepts an options object.
 | `port`     | `25`          | Port to bind to. (Ports under 1024 usually require superuser privileges.) |
 | `hostname` | `localhost`   | Hostname advertised by the SMTP server.                                   |
 | `size`     | `1000000`     | Maximum message size (in bytes).                                          |
+| `tls`      | `undefined`   | createSecureContext options for STARTTLS support.                         |
 
 ## Events
 
