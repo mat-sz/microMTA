@@ -16,6 +16,7 @@ export class microMTAConnection {
   private isAcceptingData = false;
   private recipients: string[] = [];
   private sender?: string;
+  private extensions: string[] = ['SMTPUTF8', 'PIPELINING', '8BITMIME'];
 
   constructor(
     private socket: Socket,
@@ -26,6 +27,12 @@ export class microMTAConnection {
   ) {
     this.socket.setEncoding('utf8');
     this.open = true;
+
+    this.extensions.push('SIZE ' + (this.options.size ?? defaultSize));
+
+    if (this.options.tls) {
+      this.extensions.push('STARTTLS');
+    }
 
     // Welcome message.
     this.reply(220, this.options.hostname + ' ESMTP microMTA');
@@ -54,6 +61,14 @@ export class microMTAConnection {
     } else {
       this.socket.write(code + ' ' + message + ending);
     }
+  }
+
+  private get greeting() {
+    return (
+      this.options.hostname +
+      ', greeting accepted.\n' +
+      this.extensions.join('\n')
+    );
   }
 
   private addListeners(socket: Socket) {
@@ -159,13 +174,7 @@ export class microMTAConnection {
           break;
         case SMTPCommand.EHLO:
           // EHLO hostname
-          this.reply(
-            250,
-            this.options.hostname +
-              ', greeting accepted.\nSMTPUTF8\nPIPELINING\n8BITMIME\nSIZE ' +
-              (this.options.size ?? defaultSize)
-          );
-
+          this.reply(250, this.greeting);
           this.greeted = true;
           break;
         default:
