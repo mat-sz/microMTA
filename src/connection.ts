@@ -83,19 +83,25 @@ export class microMTAConnection {
       return;
     }
 
+    this.greeted = false;
+
     this.socket.removeAllListeners('error');
+    this.socket.removeAllListeners('data');
+    this.socket.removeAllListeners('close');
+    this.socket.removeAllListeners('end');
 
     const secureContext = createSecureContext(this.options.tls);
 
     const tlsSocket = new TLSSocket(this.socket, {
       secureContext,
-      rejectUnauthorized: true,
+      rejectUnauthorized: false,
       isServer: true,
     });
     tlsSocket.setEncoding('utf8');
     this.socket = tlsSocket;
 
-    tlsSocket.on('secureConnect', () => {
+    // secure event needs to be used here instead of secureConnect.
+    tlsSocket.on('secure', () => {
       this.addListeners(tlsSocket);
     });
   }
