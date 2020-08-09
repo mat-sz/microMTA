@@ -1,4 +1,9 @@
 import { createServer, Server, Socket } from 'net';
+import {
+  createServer as createTLSServer,
+  Server as TLSServer,
+  createSecureContext,
+} from 'tls';
 
 import {
   microMTAEvents,
@@ -11,6 +16,7 @@ import { microMTAConnection } from './connection';
 
 export class microMTA {
   private server: Server;
+  private tlsServer: TLSServer | undefined;
 
   private connections: Set<microMTAConnection> = new Set();
 
@@ -24,6 +30,7 @@ export class microMTA {
     hostname: 'localhost',
     ip: '0.0.0.0',
     port: 25,
+    tlsPort: 465,
     size: 10000000,
   };
 
@@ -35,6 +42,15 @@ export class microMTA {
 
     this.server = createServer(socket => this.connection(socket));
     this.server.listen(this.options.port, this.options.ip);
+
+    if (this.options.tlsPort && this.options.tls) {
+      this.tlsServer = createTLSServer(
+        {
+          secureContext: createSecureContext(this.options.tls),
+        },
+        socket => this.connection(socket)
+      );
+    }
 
     setInterval(this.pruneConnections.bind(this), 1000);
   }
