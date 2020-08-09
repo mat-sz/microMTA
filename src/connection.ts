@@ -11,6 +11,7 @@ const defaultSize = 1000000;
 
 export class microMTAConnection {
   private buffer = '';
+  private secure = false;
   private open = false;
   private greeted = false;
   private isAcceptingData = false;
@@ -28,11 +29,13 @@ export class microMTAConnection {
     this.socket.setEncoding('utf8');
     this.open = true;
 
-    this.extensions.push('SIZE ' + (this.options.size ?? defaultSize));
-
-    if (this.options.tls) {
+    if (this.socket instanceof TLSSocket) {
+      this.secure = this.socket.encrypted;
+    } else if (this.options.tls) {
       this.extensions.push('STARTTLS');
     }
+
+    this.extensions.push('SIZE ' + (this.options.size ?? defaultSize));
 
     // Welcome message.
     this.reply(220, this.options.hostname + ' ESMTP microMTA');
@@ -79,7 +82,7 @@ export class microMTAConnection {
   }
 
   private starttls() {
-    if (!this.options.tls) {
+    if (!this.options.tls || this.secure) {
       return;
     }
 
@@ -102,6 +105,10 @@ export class microMTAConnection {
 
     // secure event needs to be used here instead of secureConnect.
     tlsSocket.on('secure', () => {
+      this.secure = true;
+      this.extensions = this.extensions.filter(
+        extension => extension !== 'STARTTLS'
+      );
       this.addListeners(tlsSocket);
     });
   }
@@ -198,6 +205,11 @@ export class microMTAConnection {
       case SMTPCommand.STARTTLS:
         if (!this.options.tls) {
           this.reply(502, 'Not supported');
+          break;
+        }
+
+        if (this.secure) {
+          this.reply(503, 'Bad sequence');
           break;
         }
 
