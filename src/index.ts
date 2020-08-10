@@ -50,6 +50,7 @@ export class microMTA {
         },
         socket => this.connection(socket)
       );
+      this.tlsServer.listen(this.options.tlsPort, this.options.ip);
     }
 
     setInterval(this.pruneConnections.bind(this), 1000);
