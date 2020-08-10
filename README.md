@@ -42,14 +42,14 @@ The `message` is a raw RFC 822 (and any related RFCs) message that needs to be p
 
 The constructor for `microMTA` accepts an options object.
 
-| Property   | Default value | Description                                                                       |
-| ---------- | ------------- | --------------------------------------------------------------------------------- |
-| `ip`       | `0.0.0.0`     | IP address to bind to.                                                            |
-| `port`     | `25`          | Port to bind to. (Ports under 1024 usually require superuser privileges.)         |
-| `hostname` | `localhost`   | Hostname advertised by the SMTP server.                                           |
-| `size`     | `1000000`     | Maximum message size (in bytes).                                                  |
-| `tls`      | `undefined`   | createSecureContext options for STARTTLS support.                                 |
-| `tlsPost`  | `465`         | Port for secure only communication, only enabled if `tls` is configured properly. |
+| Property   | Default value | Description                                                                                                              |
+| ---------- | ------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `ip`       | `0.0.0.0`     | IP address to bind to.                                                                                                   |
+| `port`     | `25`          | Port to bind to. (Ports under 1024 usually require superuser privileges.)                                                |
+| `hostname` | `localhost`   | Hostname advertised by the SMTP server.                                                                                  |
+| `size`     | `1000000`     | Maximum message size (in bytes).                                                                                         |
+| `tls`      | `undefined`   | [createSecureContext options](https://nodejs.org/api/tls.html#tls_tls_createsecurecontext_options) for STARTTLS support. |
+| `tlsPost`  | `465`         | Port for secure only communication, only enabled if `tls` is configured properly.                                        |
 
 ## Events
 
