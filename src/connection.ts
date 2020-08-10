@@ -31,7 +31,7 @@ export class microMTAConnection {
 
     if (this.socket instanceof TLSSocket) {
       this.secure = this.socket.encrypted;
-    } else if (this.options.tls) {
+    } else if (this.options.secureContextOptions) {
       this.extensions.push('STARTTLS');
     }
 
@@ -82,7 +82,7 @@ export class microMTAConnection {
   }
 
   private starttls() {
-    if (!this.options.tls || this.secure) {
+    if (!this.options.secureContextOptions || this.secure) {
       return;
     }
 
@@ -93,7 +93,9 @@ export class microMTAConnection {
     this.socket.removeAllListeners('close');
     this.socket.removeAllListeners('end');
 
-    const secureContext = createSecureContext(this.options.tls);
+    const secureContext = createSecureContext(
+      this.options.secureContextOptions
+    );
 
     const tlsSocket = new TLSSocket(this.socket, {
       secureContext,
@@ -203,7 +205,7 @@ export class microMTAConnection {
         this.reply(503, 'Bad sequence');
         break;
       case SMTPCommand.STARTTLS:
-        if (!this.options.tls) {
+        if (!this.options.secureContextOptions) {
           this.reply(502, 'Not supported');
           break;
         }

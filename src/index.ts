@@ -43,10 +43,10 @@ export class microMTA {
     this.server = createServer(socket => this.connection(socket));
     this.server.listen(this.options.port, this.options.ip);
 
-    if (this.options.tlsPort && this.options.tls) {
+    if (this.options.tlsPort && this.options.secureContextOptions) {
       this.tlsServer = createTLSServer(
         {
-          secureContext: createSecureContext(this.options.tls),
+          secureContext: createSecureContext(this.options.secureContextOptions),
         },
         socket => this.connection(socket)
       );
