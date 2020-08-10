@@ -43,7 +43,6 @@
   "license": "BSD-3-Clause-Clear",
   "devDependencies": {
     "@types/jest": "^25.2.1",
-    "@types/node": "^13.1.4",
     "husky": "^4.2.3",
     "jest": "^25.2.7",
     "lint-staged": "^10.0.9",
@@ -51,5 +50,8 @@
     "ts-jest": "^25.3.1",
     "ts-node-dev": "^1.0.0-pre.44",
     "typescript": "^3.7.4"
+  },
+  "dependencies": {
+    "@types/node": "^14.0.27"
   }
 }
