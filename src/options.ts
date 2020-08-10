@@ -6,5 +6,6 @@ export interface microMTAOptions {
   tlsPort?: number;
   ip?: string;
   size?: number;
+  enableAuth?: string;
   secureContextOptions?: SecureContextOptions;
 }
