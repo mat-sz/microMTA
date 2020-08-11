@@ -18,7 +18,6 @@ export class microMTAConnection {
   private isAcceptingData = false;
   private recipients: string[] = [];
   private sender?: string;
-  private extensions: string[] = ['SMTPUTF8', 'PIPELINING', '8BITMIME'];
 
   /**
    * Connection state, can be used to store authentication data.
@@ -37,11 +36,7 @@ export class microMTAConnection {
 
     if (this.socket instanceof TLSSocket) {
       this.secure = this.socket.encrypted;
-    } else if (this.options.secureContextOptions) {
-      this.extensions.push('STARTTLS');
     }
-
-    this.extensions.push('SIZE ' + (this.options.size ?? defaultSize));
 
     // Welcome message.
     this.reply(220, this.options.hostname + ' ESMTP microMTA');
@@ -50,6 +45,18 @@ export class microMTAConnection {
 
   get isOpen() {
     return this.open;
+  }
+
+  get extensions() {
+    const extensions = ['SMTPUTF8', 'PIPELINING', '8BITMIME'];
+
+    if (!this.secure && this.options.secureContextOptions) {
+      extensions.push('STARTTLS');
+    }
+
+    extensions.push('SIZE ' + (this.options.size ?? defaultSize));
+
+    return extensions;
   }
 
   close() {
@@ -114,9 +121,6 @@ export class microMTAConnection {
     // secure event needs to be used here instead of secureConnect.
     tlsSocket.on('secure', () => {
       this.secure = true;
-      this.extensions = this.extensions.filter(
-        extension => extension !== 'STARTTLS'
-      );
       this.addListeners(tlsSocket);
     });
   }
