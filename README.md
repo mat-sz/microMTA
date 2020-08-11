@@ -82,3 +82,4 @@ If a function of the following type is passed in the options object, the server 
 ### Supported authentication methods
 
 - PLAIN
+- LOGIN

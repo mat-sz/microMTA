@@ -11,6 +11,9 @@ const ending = '\r\n';
 const dataEnding = '\r\n.\r\n';
 const defaultSize = 1000000;
 
+const authLoginUsername = 'VXNlcm5hbWU6';
+const authLoginPassword = 'UGFzc3dvcmQ6';
+
 const textDecoder = new TextDecoder('utf-8');
 const base64Decode = (input: string): string =>
   textDecoder.decode(toByteArray(input));
@@ -62,7 +65,7 @@ export class microMTAConnection {
       return [];
     }
 
-    return ['PLAIN'];
+    return ['PLAIN', 'LOGIN'];
   }
 
   private get extensions() {
@@ -248,9 +251,24 @@ export class microMTAConnection {
           this.reply(334);
         }
         break;
+      case 'LOGIN':
+        if (isInitialCommand) {
+          this.reply(334, authLoginUsername);
+        } else if (!this.authenticationUsername) {
+          this.authenticationUsername = base64Decode(args[0]);
+          this.reply(334, authLoginPassword);
+        } else {
+          this.authenticationPassword = base64Decode(args[0]);
+          isComplete = true;
+        }
+        break;
     }
 
-    if (this.authenticationPassword && this.authenticationUsername) {
+    if (
+      isComplete &&
+      this.authenticationPassword &&
+      this.authenticationUsername
+    ) {
       const result = await this.options.authenticate(
         this,
         this.authenticationUsername,
