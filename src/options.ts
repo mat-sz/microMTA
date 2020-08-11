@@ -11,7 +11,8 @@ export interface microMTAOptions {
   authenticate?: (
     connection: microMTAConnection,
     username: string,
-    password: string
+    password: string,
+    authorizationIdentity?: string
   ) => boolean | Promise<boolean>;
   secureContextOptions?: SecureContextOptions;
 }

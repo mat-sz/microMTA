@@ -1,23 +1,33 @@
 import { Socket } from 'net';
+import { TLSSocket, createSecureContext } from 'tls';
+import { toByteArray } from 'base64-js';
+import { TextDecoder } from 'util';
 
 import { microMTAMessage } from './message';
 import { microMTAOptions } from './options';
 import { SMTPCommand } from './commands';
-import { TLSSocket, createSecureContext } from 'tls';
 
 const ending = '\r\n';
 const dataEnding = '\r\n.\r\n';
 const defaultSize = 1000000;
 
+const textDecoder = new TextDecoder('utf-8');
+const base64Decode = (input: string): string =>
+  textDecoder.decode(toByteArray(input));
+
 export class microMTAConnection {
   private buffer = '';
-  private authenticated = false;
   private secure = false;
   private open = false;
   private greeted = false;
   private isAcceptingData = false;
   private recipients: string[] = [];
   private sender?: string;
+  private isAuthenticated = false;
+  private isAuthenticating?: string;
+  private authenticationUsername?: string;
+  private authenticationPassword?: string;
+  private authorizationIdentity?: string;
 
   /**
    * Connection state, can be used to store authentication data.
@@ -47,11 +57,23 @@ export class microMTAConnection {
     return this.open;
   }
 
-  get extensions() {
+  private get supportedAuthenticationMethods() {
+    if (!this.options.authenticate) {
+      return [];
+    }
+
+    return ['PLAIN'];
+  }
+
+  private get extensions() {
     const extensions = ['SMTPUTF8', 'PIPELINING', '8BITMIME'];
 
     if (!this.secure && this.options.secureContextOptions) {
       extensions.push('STARTTLS');
+    }
+
+    if (this.options.authenticate) {
+      extensions.push('AUTH ' + this.supportedAuthenticationMethods.join(' '));
     }
 
     extensions.push('SIZE ' + (this.options.size ?? defaultSize));
@@ -64,7 +86,12 @@ export class microMTAConnection {
     this.open = false;
   }
 
-  reply(code: number, message: string) {
+  reply(code: number, message?: string) {
+    if (!message) {
+      this.socket.write(code + ending);
+      return;
+    }
+
     if (message.includes('\n')) {
       const lines = message.split('\n');
       for (let i = 0; i < lines.length; i++) {
@@ -125,7 +152,7 @@ export class microMTAConnection {
     });
   }
 
-  private handleData(data: Buffer) {
+  private async handleData(data: Buffer) {
     const string = data.toString();
 
     if (!this.isAcceptingData && string.includes(ending)) {
@@ -136,9 +163,13 @@ export class microMTAConnection {
       // Sometimes the text data may be divided
       // between multiple data events.
       for (let i = 0; i < commands.length - 1; i++) {
-        const args = commands[i].split(' ');
-        const command = args.splice(0, 1)[0];
-        this.handleCommand(command.toUpperCase(), args);
+        if (this.isAuthenticating) {
+          await this.handleAuthentication(commands[i].split(' '));
+        } else {
+          const args = commands[i].split(' ');
+          const command = args.splice(0, 1)[0];
+          this.handleCommand(command.toUpperCase(), args);
+        }
       }
 
       // Store the incomplete command (or '') as the new buffer.
@@ -186,6 +217,55 @@ export class microMTAConnection {
 
     this.buffer = '';
     this.isAcceptingData = false;
+  }
+
+  private async handleAuthentication(args: string[], isInitialCommand = false) {
+    if (!this.isAuthenticating) {
+      this.reply(503, 'Bad sequence');
+      return;
+    }
+
+    if (!this.options.authenticate) {
+      return;
+    }
+
+    let isComplete = false;
+    switch (this.isAuthenticating) {
+      case 'PLAIN':
+        if (typeof args[0] === 'string') {
+          const data = base64Decode(args[0]).split('\0');
+          if (data.length === 3) {
+            this.authorizationIdentity = data[0];
+            data.shift();
+          }
+
+          this.authenticationUsername = data[0];
+          this.authenticationPassword = data[1];
+          isComplete = true;
+        } else if (!isInitialCommand) {
+          isComplete = true;
+        } else {
+          this.reply(334);
+        }
+        break;
+    }
+
+    if (this.authenticationPassword && this.authenticationUsername) {
+      const result = await this.options.authenticate(
+        this,
+        this.authenticationUsername,
+        this.authenticationPassword,
+        this.authorizationIdentity
+      );
+
+      this.isAuthenticating = undefined;
+      this.isAuthenticated = result;
+      if (result) {
+        this.reply(235, 'Authentication successful');
+      } else {
+        this.reply(535, 'Bad username or password');
+      }
+    }
   }
 
   private handleCommand(command: string, args: string[]) {
@@ -278,6 +358,15 @@ export class microMTAConnection {
         } else {
           this.reply(503, 'Bad sequence');
         }
+        break;
+      case SMTPCommand.AUTH:
+        if (!this.supportedAuthenticationMethods.includes(args[0])) {
+          this.reply(504, 'Unrecognized authentication type');
+          break;
+        }
+
+        this.isAuthenticating = args[0];
+        this.handleAuthentication(args.slice(1), true);
         break;
       case SMTPCommand.RSET:
         this.recipients = [];
