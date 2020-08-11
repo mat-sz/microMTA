@@ -26,7 +26,6 @@ export class microMTAConnection {
   private isAcceptingData = false;
   private recipients: string[] = [];
   private sender?: string;
-  private isAuthenticated = false;
   private isAuthenticating?: string;
   private authenticationUsername?: string;
   private authenticationPassword?: string;
@@ -36,6 +35,8 @@ export class microMTAConnection {
    * Connection state, can be used to store authentication data.
    */
   public state: any;
+
+  public isAuthenticated = false;
 
   constructor(
     private socket: Socket,
