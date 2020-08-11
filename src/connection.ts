@@ -11,6 +11,7 @@ const defaultSize = 1000000;
 
 export class microMTAConnection {
   private buffer = '';
+  private authenticated = false;
   private secure = false;
   private open = false;
   private greeted = false;
@@ -18,6 +19,11 @@ export class microMTAConnection {
   private recipients: string[] = [];
   private sender?: string;
   private extensions: string[] = ['SMTPUTF8', 'PIPELINING', '8BITMIME'];
+
+  /**
+   * Connection state, can be used to store authentication data.
+   */
+  public state: any;
 
   constructor(
     private socket: Socket,
