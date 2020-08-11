@@ -15,8 +15,17 @@ const authLoginUsername = 'VXNlcm5hbWU6';
 const authLoginPassword = 'UGFzc3dvcmQ6';
 
 const textDecoder = new TextDecoder('utf-8');
-const base64Decode = (input: string): string =>
-  textDecoder.decode(toByteArray(input));
+const base64Decode = (input: string): string => {
+  if (!input) {
+    return '';
+  }
+
+  try {
+    return textDecoder.decode(toByteArray(input));
+  } catch {
+    return '';
+  }
+};
 
 export class microMTAConnection {
   private buffer = '';
