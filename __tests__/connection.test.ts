@@ -1,7 +1,6 @@
 import { microMTAConnection } from '../src/connection';
 
 class Socket {
-  lastMessage = '';
   listeners: Record<string, Function[]> = {};
 
   setEncoding(encoding: string) {}
@@ -18,13 +17,10 @@ class Socket {
     this.listeners[event].forEach(listener => listener.call(this, ...args));
   }
 
-  write(data: string) {
-    const messages = data.split('\r\n');
-    if (messages[messages.length - 1] === '') {
-      this.lastMessage = messages[messages.length - 2];
-    } else {
-      this.lastMessage = messages[messages.length - 1];
-    }
+  write(data: string) {}
+
+  command(data: string) {
+    this.emit('data', Buffer.from(data + '\r\n'));
   }
 
   destroy() {}
@@ -33,7 +29,8 @@ class Socket {
 describe('connection', () => {
   it('welcomes clients', () => {
     const socket = new Socket();
-    const connection = new microMTAConnection(
+    const write = jest.spyOn(socket, 'write');
+    new microMTAConnection(
       socket as any,
       { hostname: 'localhost', size: 100000 },
       () => {},
@@ -41,6 +38,22 @@ describe('connection', () => {
       () => {}
     );
 
-    expect(socket.lastMessage).toEqual('220 localhost ESMTP microMTA');
+    expect(write).toHaveBeenCalledWith('220 localhost ESMTP microMTA\r\n');
+  });
+
+  it('handles command: HELO', () => {
+    const socket = new Socket();
+    const write = jest.spyOn(socket, 'write');
+    new microMTAConnection(
+      socket as any,
+      { hostname: 'localhost', size: 100000 },
+      () => {},
+      () => {},
+      () => {}
+    );
+
+    socket.command('HELO');
+
+    expect(write).toHaveBeenCalledWith('250 localhost, greeting accepted.\r\n');
   });
 });
