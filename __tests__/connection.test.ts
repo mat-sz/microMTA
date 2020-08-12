@@ -2,10 +2,21 @@ import { microMTAConnection } from '../src/connection';
 
 class Socket {
   lastMessage = '';
+  listeners: Record<string, Function[]> = {};
 
   setEncoding(encoding: string) {}
 
-  on(event: string, listener: Function) {}
+  on(event: string, listener: Function) {
+    if (this.listeners[event]) {
+      this.listeners[event].push(listener);
+    } else {
+      this.listeners[event] = [listener];
+    }
+  }
+
+  emit(event: string, ...args: any[]) {
+    this.listeners[event].forEach(listener => listener.call(this, ...args));
+  }
 
   write(data: string) {
     const messages = data.split('\r\n');
