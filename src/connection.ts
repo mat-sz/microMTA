@@ -5,8 +5,8 @@ import { TextDecoder } from 'util';
 
 import { microMTAMessage } from './message';
 import { microMTAOptions } from './options';
-import { SMTPCommand } from './commands';
-import * as SMTPReply from './replies';
+import { SMTPCommand } from './smtp/commands';
+import * as SMTPReply from './smtp/replies';
 
 const ending = '\r\n';
 const dataEnding = '\r\n.\r\n';
