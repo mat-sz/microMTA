@@ -6,6 +6,7 @@ import { TextDecoder } from 'util';
 import { microMTAMessage } from './message';
 import { microMTAOptions } from './options';
 import { SMTPCommand } from './commands';
+import * as SMTPReply from './replies';
 
 const ending = '\r\n';
 const dataEnding = '\r\n.\r\n';
@@ -198,7 +199,7 @@ export class microMTAConnection {
       if (this.isAcceptingData) {
         if (this.buffer.length > (this.options.size ?? defaultSize)) {
           this.buffer = '';
-          this.reply(552, 'Maximum size exceeded');
+          this.reply(...SMTPReply.MAXIMUM_SIZE_EXCEEDED);
         }
 
         // If a DATA message was sent, store all the
@@ -228,9 +229,9 @@ export class microMTAConnection {
         sender: this.sender,
         message,
       } as microMTAMessage);
-      this.reply(250, 'Ok');
+      this.reply(...SMTPReply.OK);
     } else {
-      this.reply(503, 'Bad sequence');
+      this.reply(...SMTPReply.BAD_SEQUENCE);
     }
 
     this.buffer = '';
@@ -239,7 +240,7 @@ export class microMTAConnection {
 
   private async handleAuthentication(args: string[], isInitialCommand = false) {
     if (!this.isAuthenticating) {
-      this.reply(503, 'Bad sequence');
+      this.reply(...SMTPReply.BAD_SEQUENCE);
       return;
     }
 
@@ -294,9 +295,9 @@ export class microMTAConnection {
       this.isAuthenticating = undefined;
       this.isAuthenticated = result;
       if (result) {
-        this.reply(235, 'Authentication successful');
+        this.reply(...SMTPReply.AUTHENTICATION_SUCCESSFUL);
       } else {
-        this.reply(535, 'Bad username or password');
+        this.reply(...SMTPReply.BAD_USERNAME_OR_PASSWORD);
       }
     }
   }
@@ -316,7 +317,7 @@ export class microMTAConnection {
           this.greeted = true;
           break;
         default:
-          this.reply(503, 'Bad sequence');
+          this.reply(...SMTPReply.BAD_SEQUENCE);
       }
 
       return;
@@ -325,20 +326,20 @@ export class microMTAConnection {
     switch (command) {
       case SMTPCommand.HELO:
       case SMTPCommand.EHLO:
-        this.reply(503, 'Bad sequence');
+        this.reply(...SMTPReply.BAD_SEQUENCE);
         break;
       case SMTPCommand.STARTTLS:
         if (!this.options.secureContextOptions) {
-          this.reply(502, 'Not supported');
+          this.reply(...SMTPReply.NOT_IMPLEMENTED);
           break;
         }
 
         if (this.secure) {
-          this.reply(503, 'Bad sequence');
+          this.reply(...SMTPReply.BAD_SEQUENCE);
           break;
         }
 
-        this.reply(220, 'TLS go ahead');
+        this.reply(...SMTPReply.TLS_GO_AHEAD);
         this.starttls();
         break;
       case SMTPCommand.MAIL:
@@ -359,15 +360,15 @@ export class microMTAConnection {
 
           const sender = args[0].substring(6, args[0].length - 1);
           if (size && size > (this.options.size ?? defaultSize)) {
-            this.reply(552, 'Maximum size exceeded');
+            this.reply(...SMTPReply.MAXIMUM_SIZE_EXCEEDED);
             this.onRejected(sender, this.recipients);
             break;
           }
 
           this.sender = sender;
-          this.reply(250, 'Ok');
+          this.reply(...SMTPReply.OK);
         } else {
-          this.reply(501, 'Argument syntax error');
+          this.reply(...SMTPReply.SYNTAX_ERROR_ARGUMENT);
         }
         break;
       case SMTPCommand.RCPT:
@@ -378,23 +379,23 @@ export class microMTAConnection {
           args[0].endsWith('>')
         ) {
           this.recipients.push(args[0].substring(4, args[0].length - 1));
-          this.reply(250, 'Ok');
+          this.reply(...SMTPReply.OK);
         } else {
-          this.reply(501, 'Argument syntax error');
+          this.reply(...SMTPReply.SYNTAX_ERROR_ARGUMENT);
         }
         break;
       case SMTPCommand.DATA:
         // DATA
         if (this.recipients.length > 0 && this.sender) {
-          this.reply(354, 'End data with <CR><LF>.<CR><LF>');
+          this.reply(...SMTPReply.START_MAIL_INPUT);
           this.isAcceptingData = true;
         } else {
-          this.reply(503, 'Bad sequence');
+          this.reply(...SMTPReply.BAD_SEQUENCE);
         }
         break;
       case SMTPCommand.AUTH:
         if (!this.supportedAuthenticationMethods.includes(args[0])) {
-          this.reply(504, 'Unrecognized authentication type');
+          this.reply(...SMTPReply.NOT_IMPLEMENTED_ARGUMENT);
           break;
         }
 
@@ -404,19 +405,19 @@ export class microMTAConnection {
       case SMTPCommand.RSET:
         this.recipients = [];
         this.sender = undefined;
-        this.reply(250, 'Ok');
+        this.reply(...SMTPReply.OK);
         break;
       case SMTPCommand.NOOP:
-        this.reply(250, 'Ok');
+        this.reply(...SMTPReply.OK);
         break;
       case SMTPCommand.QUIT:
         // QUIT
-        this.reply(221, 'Bye');
+        this.reply(...SMTPReply.BYE);
         this.socket.destroy();
         this.open = false;
         break;
       default:
-        this.reply(502, 'Not implemented');
+        this.reply(...SMTPReply.NOT_IMPLEMENTED);
     }
   }
 }
