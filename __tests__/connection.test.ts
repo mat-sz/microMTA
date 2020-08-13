@@ -73,4 +73,20 @@ describe('connection', () => {
 
     expect(write).toHaveBeenCalledWith('250 localhost, greeting accepted.\r\n');
   });
+
+  it('handles command: EHLO', () => {
+    const socket = new Socket();
+    const write = jest.spyOn(socket, 'write');
+    new microMTAConnection(
+      socket as any,
+      { hostname: 'localhost', size: 100000 },
+      () => {},
+      () => {},
+      () => {}
+    );
+
+    socket.command('EHLO');
+
+    expect(write).toHaveBeenCalledWith('250-localhost, greeting accepted.\r\n');
+  });
 });
