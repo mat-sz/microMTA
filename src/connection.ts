@@ -126,11 +126,11 @@ export class microMTAConnection {
   }
 
   private get greeting() {
-    return (
-      this.options.hostname +
-      ', greeting accepted.\n' +
-      this.extensions.join('\n')
-    );
+    return this.options.hostname + ', greeting accepted.';
+  }
+
+  private get extendedGreeting() {
+    return this.greeting + '\n' + this.extensions.join('\n');
   }
 
   private addListeners(socket: Socket) {
@@ -307,13 +307,13 @@ export class microMTAConnection {
       switch (command) {
         case SMTPCommand.HELO:
           // HELO hostname
-          this.reply(250, this.options.hostname + ', greeting accepted.');
+          this.reply(250, this.greeting);
 
           this.greeted = true;
           break;
         case SMTPCommand.EHLO:
           // EHLO hostname
-          this.reply(250, this.greeting);
+          this.reply(250, this.extendedGreeting);
           this.greeted = true;
           break;
         default:
