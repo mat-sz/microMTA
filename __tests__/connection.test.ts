@@ -41,6 +41,23 @@ describe('connection', () => {
     expect(write).toHaveBeenCalledWith('220 localhost ESMTP microMTA\r\n');
   });
 
+  it('connection is dropped on error', () => {
+    const socket = new Socket();
+    const destroy = jest.spyOn(socket, 'destroy');
+    const connection = new microMTAConnection(
+      socket as any,
+      { hostname: 'localhost', size: 100000 },
+      () => {},
+      () => {},
+      () => {}
+    );
+
+    socket.command('FROM');
+
+    expect(destroy).toHaveBeenCalled();
+    expect(connection.isOpen).toEqual(false);
+  });
+
   it('handles command: HELO', () => {
     const socket = new Socket();
     const write = jest.spyOn(socket, 'write');

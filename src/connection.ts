@@ -117,6 +117,11 @@ export class microMTAConnection {
     } else {
       this.socket.write(code + ' ' + message + ending);
     }
+
+    // 5xx errors result in an ended connection.
+    if (code >= 500) {
+      this.close();
+    }
   }
 
   private get greeting() {
