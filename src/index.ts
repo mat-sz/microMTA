@@ -64,7 +64,7 @@ export class microMTA {
       }
     });
 
-    this.server.close();
+    this.server.close(() => this.server.unref());
   }
 
   /**
