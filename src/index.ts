@@ -13,6 +13,7 @@ import {
 } from './events';
 import { microMTAOptions } from './options';
 import { microMTAConnection } from './connection';
+import { SERVER_SHUTTING_DOWN } from './smtp/replies';
 
 export class microMTA {
   private server: Server;
@@ -59,7 +60,7 @@ export class microMTA {
   close() {
     this.connections.forEach(connection => {
       if (connection.isOpen) {
-        connection.reply(421, 'The server is shutting down.');
+        connection.reply(...SERVER_SHUTTING_DOWN);
         connection.close();
       }
     });

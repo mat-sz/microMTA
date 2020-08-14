@@ -29,3 +29,8 @@ export const START_MAIL_INPUT: SMTPReply = [
   354,
   'End data with <CR><LF>.<CR><LF>',
 ];
+
+export const SERVER_SHUTTING_DOWN: SMTPReply = [
+  421,
+  'The server is shutting down',
+];

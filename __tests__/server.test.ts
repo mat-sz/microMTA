@@ -37,7 +37,7 @@ describe('server', () => {
     });
     socket.on('close', () => {
       expect(onData).toHaveBeenCalledWith(
-        '421 The server is shutting down.\r\n'
+        '421 The server is shutting down\r\n'
       );
       done();
     });
