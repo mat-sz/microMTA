@@ -413,8 +413,7 @@ export class microMTAConnection {
       case SMTPCommand.QUIT:
         // QUIT
         this.reply(...SMTPReply.BYE);
-        this.socket.destroy();
-        this.open = false;
+        this.close();
         break;
       default:
         this.reply(...SMTPReply.NOT_IMPLEMENTED);

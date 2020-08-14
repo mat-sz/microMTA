@@ -43,4 +43,46 @@ describe('server', () => {
     });
     socket.connect({ host: '127.0.0.1', port });
   });
+
+  it('handles incoming mail', done => {
+    const port = nextPort();
+    const mta = new microMTA({
+      hostname: 'localhost',
+      ip: '127.0.0.1',
+      port,
+    });
+    const onMessage = jest.fn();
+    mta.on('message', onMessage);
+
+    const socket = new Socket();
+    socket.on('connect', () => {
+      socket.write(
+        'EHLO\r\nMAIL FROM:<a@localhost>\r\nRCPT TO:<b@localhost>\r\nDATA\r\n'
+      );
+    });
+
+    let messageSent = false;
+    socket.on('data', buffer => {
+      const string = buffer.toString();
+      if (string.includes('354')) {
+        socket.write('Test\r\n.\r\n');
+        messageSent = true;
+      } else if (messageSent && string.includes('250')) {
+        socket.write('QUIT\r\n');
+      }
+    });
+
+    socket.on('close', () => {
+      mta.close();
+      expect(onMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          recipients: ['b@localhost'],
+          sender: 'a@localhost',
+          message: 'Test',
+        })
+      );
+      done();
+    });
+    socket.connect({ host: '127.0.0.1', port });
+  });
 });
