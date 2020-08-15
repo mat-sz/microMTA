@@ -316,6 +316,14 @@ export class microMTAConnection {
           this.reply(250, this.extendedGreeting);
           this.greeted = true;
           break;
+        case SMTPCommand.QUIT:
+          // QUIT
+          this.reply(...SMTPReply.BYE);
+          this.close();
+          break;
+        case SMTPCommand.NOOP:
+          this.reply(...SMTPReply.OK);
+          break;
         default:
           this.reply(...SMTPReply.BAD_SEQUENCE);
       }
