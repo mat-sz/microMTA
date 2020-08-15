@@ -105,4 +105,20 @@ describe('connection', () => {
 
     expect(write).toHaveBeenCalledWith();
   });
+
+  it('handles command: NOOP', () => {
+    const socket = new Socket();
+    const write = jest.spyOn(socket, 'write');
+    new microMTAConnection(
+      socket as any,
+      { hostname: 'localhost', size: 100000 },
+      () => {},
+      () => {},
+      () => {}
+    );
+
+    socket.command('NOOP');
+
+    expect(write).toHaveBeenCalledWith('250 Ok\r\n');
+  });
 });
