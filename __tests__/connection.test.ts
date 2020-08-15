@@ -92,7 +92,8 @@ describe('connection', () => {
 
   it('handles command: QUIT', () => {
     const socket = new Socket();
-    const write = jest.spyOn(socket, 'destroy');
+    const write = jest.spyOn(socket, 'write');
+    const destroy = jest.spyOn(socket, 'destroy');
     new microMTAConnection(
       socket as any,
       { hostname: 'localhost', size: 100000 },
@@ -103,7 +104,8 @@ describe('connection', () => {
 
     socket.command('QUIT');
 
-    expect(write).toHaveBeenCalledWith();
+    expect(write).toHaveBeenCalledWith('221 Bye\r\n');
+    expect(destroy).toHaveBeenCalledWith();
   });
 
   it('handles command: NOOP', () => {
