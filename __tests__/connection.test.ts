@@ -89,4 +89,20 @@ describe('connection', () => {
 
     expect(write).toHaveBeenCalledWith('250-localhost, greeting accepted.\r\n');
   });
+
+  it('handles command: QUIT', () => {
+    const socket = new Socket();
+    const write = jest.spyOn(socket, 'destroy');
+    new microMTAConnection(
+      socket as any,
+      { hostname: 'localhost', size: 100000 },
+      () => {},
+      () => {},
+      () => {}
+    );
+
+    socket.command('QUIT');
+
+    expect(write).toHaveBeenCalledWith();
+  });
 });
