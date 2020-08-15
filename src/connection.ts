@@ -303,6 +303,17 @@ export class microMTAConnection {
   }
 
   private handleCommand(command: string, args: string[]) {
+    switch (command) {
+      case SMTPCommand.QUIT:
+        // QUIT
+        this.reply(...SMTPReply.BYE);
+        this.close();
+        return;
+      case SMTPCommand.NOOP:
+        this.reply(...SMTPReply.OK);
+        return;
+    }
+
     if (!this.greeted) {
       switch (command) {
         case SMTPCommand.HELO:
@@ -315,14 +326,6 @@ export class microMTAConnection {
           // EHLO hostname
           this.reply(250, this.extendedGreeting);
           this.greeted = true;
-          break;
-        case SMTPCommand.QUIT:
-          // QUIT
-          this.reply(...SMTPReply.BYE);
-          this.close();
-          break;
-        case SMTPCommand.NOOP:
-          this.reply(...SMTPReply.OK);
           break;
         default:
           this.reply(...SMTPReply.BAD_SEQUENCE);
@@ -414,14 +417,6 @@ export class microMTAConnection {
         this.recipients = [];
         this.sender = undefined;
         this.reply(...SMTPReply.OK);
-        break;
-      case SMTPCommand.NOOP:
-        this.reply(...SMTPReply.OK);
-        break;
-      case SMTPCommand.QUIT:
-        // QUIT
-        this.reply(...SMTPReply.BYE);
-        this.close();
         break;
       default:
         this.reply(...SMTPReply.NOT_IMPLEMENTED);
