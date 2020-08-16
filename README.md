@@ -6,6 +6,15 @@
 microMTA / µMTA
 </h2>
 
+<p align="center">
+<img alt="workflow" src="https://img.shields.io/github/workflow/status/mat-sz/micromta/Node.js%20CI%20(yarn)">
+<a href="https://npmjs.com/package/micromta">
+<img alt="npm" src="https://img.shields.io/npm/v/micromta">
+<img alt="npm" src="https://img.shields.io/npm/dw/micromta">
+<img alt="NPM" src="https://img.shields.io/npm/l/micromta">
+</a>
+</p>
+
 microMTA is a [Mail Transfer Agent (MTA)](https://en.wikipedia.org/wiki/Message_transfer_agent) library for node.js that focuses on receiving messages. The only feature of microMTA is message receiving. No sending or relaying will be possible since the library itself is not designed to handle that.
 
 microMTA was created for [testing e-mail sending](https://github.com/mat-sz/catchmail-ws) in an application, by mocking a SMTP server. By default it runs on port 25 (which requires superuser privileges or an authbind/setcap setup).
@@ -26,7 +35,7 @@ mta.on('message', message => console.log(message));
 mta.close();
 ```
 
-`message` will be of type _microMTAMessage_:
+`message` will be of the type _microMTAMessage_:
 
 ```ts
 export interface microMTAMessage {
@@ -36,7 +45,7 @@ export interface microMTAMessage {
 }
 ```
 
-The `message` is a raw RFC 822 (and any related RFCs) message that needs to be parsed. [letterparser](https://github.com/mat-sz/letterparser) can be used to parse and extract data from the raw messages.
+The `message` is a raw message that needs to be parsed. [letterparser](https://github.com/mat-sz/letterparser) can be used to parse and extract data from the raw messages.
 
 ## Options
 
@@ -50,7 +59,7 @@ The constructor for `microMTA` accepts an options object.
 | `size`         | `1000000`     | Maximum message size (in bytes).                                                                                         |
 | `tls`          | `undefined`   | [createSecureContext options](https://nodejs.org/api/tls.html#tls_tls_createsecurecontext_options) for STARTTLS support. |
 | `tlsPost`      | `465`         | Port for secure only communication, only enabled if `tls` is configured properly.                                        |
-| `authenticate` | `undefined`   | See [Authentication](#Authentication) for more details.                                                                  |
+| `authenticate` | `undefined`   | Authentication function. See [Authentication](#Authentication) for more details.                                         |
 
 ## Events
 
