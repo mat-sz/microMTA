@@ -77,7 +77,7 @@ Emitted when a message is rejected. For now, this only happens when the message 
 
 ## Authentication
 
-If a function of the following type is passed in the options object, the server will support authentication.
+microMTA supports PLAIN and LOGIN methods for SMTP authentication. To enable authentication, a function of following type must be passed with the options object:
 
 ```ts
   authenticate?: (
@@ -87,8 +87,3 @@ If a function of the following type is passed in the options object, the server 
     authorizationIdentity?: string
   ) => boolean | Promise<boolean>;
 ```
-
-### Supported authentication methods
-
-- PLAIN
-- LOGIN
