@@ -357,7 +357,7 @@ export class microMTAConnection {
         // MAIL FROM:<user@example.com>
         if (
           args.length > 0 &&
-          args[0].startsWith('FROM:<') &&
+          args[0].toUpperCase().startsWith('FROM:<') &&
           args[0].endsWith('>')
         ) {
           let size = 0;
@@ -386,7 +386,7 @@ export class microMTAConnection {
         // RCPT TO:<user@example.com>
         if (
           args.length > 0 &&
-          args[0].startsWith('TO:<') &&
+          args[0].toUpperCase().startsWith('TO:<') &&
           args[0].endsWith('>')
         ) {
           this.recipients.push(args[0].substring(4, args[0].length - 1));
