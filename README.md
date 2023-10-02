@@ -1,3 +1,5 @@
+# NOTICE: This project will no longer be maintained, please use [`@typemail/smtp`](https://github.com/typemail/smtp) instead.
+
 <h1 align="center">
   <img src="https://raw.githubusercontent.com/mat-sz/micromta/master/logo.png" alt="microMTA" width="500">
 </h1>
